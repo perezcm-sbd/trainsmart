@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrainSmart — Planificador Quinzenal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --accent:#E24B4A;--accent-dark:#A32D2D;
+  --bg:#f5f4f1;--surface:#fff;--surface2:#f0eeea;
+  --border:rgba(0,0,0,0.1);--text:#1a1a1a;--text2:#666;--text3:#999;
+  --green:#3B6D11;--green-bg:#EAF3DE;--blue:#1a73e8;
+}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem;}
+.app-shell{width:100%;max-width:520px;background:var(--surface);border-radius:16px;box-shadow:0 4px 32px rgba(0,0,0,0.10);overflow:hidden;}
+
+/* HEADER */
+.header{background:var(--accent);padding:1rem 1.5rem;display:flex;align-items:center;gap:10px;}
+.logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:28px;color:#fff;letter-spacing:-0.5px;}
+.logo span{color:rgba(255,255,255,0.55);font-weight:400}
+.header-user{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.user-avatar{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,0.6);object-fit:cover;display:none;}
+.user-name{font-size:13px;color:rgba(255,255,255,0.9);display:none;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.btn-google-login{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.3px;padding:.4rem .9rem;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);border-radius:20px;color:#fff;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+.btn-google-login:hover{background:rgba(255,255,255,0.25)}
+.btn-logout{font-size:11px;color:rgba(255,255,255,0.7);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;}
+.btn-logout:hover{color:#fff}
+
+/* STEP BAR */
+.step-bar{display:flex;background:var(--surface2);border-bottom:1px solid var(--border);}
+.step-item{flex:1;padding:.65rem .3rem;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.5px;color:var(--text3);border-bottom:3px solid transparent;text-transform:uppercase;transition:color .2s,border-color .2s;}
+.step-item.active{color:var(--accent);border-bottom-color:var(--accent)}
+.step-item.done{color:var(--text2)}
+.sn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.1);color:var(--text3);font-size:10px;margin-right:2px;transition:background .2s,color .2s;}
+.step-item.active .sn{background:var(--accent);color:#fff}
+.step-item.done .sn{background:var(--green);color:#fff}
+
+/* CONTENT */
+.content{padding:1.5rem;min-height:440px}
+.step-panel{display:none}.step-panel.visible{display:block}
+.step-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:26px;letter-spacing:-0.5px;margin-bottom:.2rem}
+.step-sub{font-size:14px;color:var(--text2);margin-bottom:1.3rem;line-height:1.5}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:1.5rem;text-align:center;cursor:pointer;background:var(--surface2);margin-bottom:.75rem;position:relative;transition:border-color .2s,background .2s;}
+.upload-zone:hover{border-color:var(--accent);background:#fff}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:30px;color:var(--accent);margin-bottom:.3rem}
+.upload-text{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:15px;color:var(--text)}
+.upload-hint{font-size:12px;color:var(--text3);margin-top:2px}
+.no-gym-btn{width:100%;padding:.85rem;border:2px dashed var(--border);border-radius:12px;background:var(--surface2);cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:var(--text2);display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;margin-bottom:.75rem;}
+.no-gym-btn:hover{border-color:var(--blue);color:var(--blue);background:#EEF4FE}
+.no-gym-btn.selected{border-color:var(--blue);border-style:solid;color:var(--blue);background:#EEF4FE}
+.img-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:.75rem}
+.img-wrap{position:relative}
+.img-thumb{width:68px;height:68px;object-fit:cover;border-radius:8px;border:1px solid var(--border)}
+.img-del{position:absolute;top:-6px;right:-6px;width:19px;height:19px;background:var(--accent);color:#fff;border:none;border-radius:50%;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+/* FORM */
+.flabel{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--text2);margin-bottom:5px;display:block}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem}
+.form-group{display:flex;flex-direction:column;margin-bottom:.75rem}
+input[type=number],input[type=email],input[type=text],select{padding:.6rem .85rem;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Barlow',sans-serif;font-size:15px;transition:border-color .2s;}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+.gender-row{display:flex;gap:.65rem;margin-bottom:.75rem}
+.gender-btn{flex:1;padding:.65rem;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:var(--text2);display:flex;align-items:center;justify-content:center;gap:7px;transition:all .15s;}
+.gender-btn.selected{border-color:var(--accent);color:var(--accent);background:#fff}
+.days-grid{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.75rem}
+.day-btn{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;color:var(--text2);display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.day-btn.selected{background:var(--accent);border-color:var(--accent);color:#fff}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);}
+.btn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.5px;padding:.6rem 1.1rem;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;text-transform:uppercase;}
+.btn:hover{background:var(--surface2)}.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.btn-green{background:var(--green);border-color:var(--green);color:#fff}
+.btn-green:hover{background:#2a4f0c;border-color:#2a4f0c}
+.btn-blue{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn-blue:hover{background:#1557b0;border-color:#1557b0}
+.err{color:var(--accent);font-size:13px;margin-top:5px;display:none}
+.ok-msg{color:var(--green);font-size:13px;margin-bottom:.5rem;display:none}
+
+/* RUNNER */
+.runner-screen{padding:1.5rem;min-height:440px;display:none;flex-direction:column;align-items:center;justify-content:center;}
+.runner-screen.visible{display:flex}
+.runner-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:23px;letter-spacing:-0.5px;margin-bottom:.3rem;text-align:center;}
+.runner-sub{font-size:14px;color:var(--text2);margin-bottom:1.75rem;text-align:center}
+.track-wrap{width:100%;position:relative;margin-bottom:1.75rem}
+.track{width:100%;height:8px;background:var(--surface2);border-radius:4px;position:relative;border:1px solid var(--border);}
+.track-fill{height:100%;background:linear-gradient(90deg,var(--accent),#ff8c6b);border-radius:4px;width:0%;transition:width .6s cubic-bezier(.4,0,.2,1);}
+.finish-flag{position:absolute;right:-4px;top:-22px;font-size:22px;}
+.runner-wrap{position:absolute;top:-26px;left:0%;transition:left .6s cubic-bezier(.4,0,.2,1);transform:translateX(-50%);}
+.runner-svg{width:34px;height:34px;}
+.steps-list{width:100%;display:flex;flex-direction:column;gap:.45rem;}
+.progress-step{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text3);transition:color .3s;}
+.progress-step.active{color:var(--text)}.progress-step.done{color:var(--green)}
+.pstep-icon{width:24px;height:24px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;transition:all .3s;}
+.progress-step.active .pstep-icon{border-color:var(--accent);color:var(--accent);background:#fff}
+.progress-step.done .pstep-icon{background:var(--green);border-color:var(--green);color:#fff}
+.pstep-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink .7s ease-in-out infinite;margin-left:auto;display:none;}
+.progress-step.active .pstep-dot{display:block}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.celebration{text-align:center;padding:1rem 0 .5rem;animation:popIn .5s cubic-bezier(.34,1.56,.64,1);display:none;}
+@keyframes popIn{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.celebration-emoji{font-size:44px;margin-bottom:.4rem}
+.celebration-text{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;color:var(--accent);margin-bottom:.2rem;}
+.celebration-sub{font-size:13px;color:var(--text2)}
+
+/* RESULT */
+.result-screen{display:none;padding:1.5rem}.result-screen.visible{display:block}
+.plan-header{background:var(--accent);color:#fff;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem;}
+.plan-header-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:21px;margin-bottom:.2rem}
+.plan-header-sub{font-size:12px;opacity:.8}
+.week-label{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin:1rem 0 .5rem;}
+.day-card{background:#fff;border:1px solid var(--border);border-radius:10px;margin-bottom:.6rem;overflow:hidden;}
+.day-header{background:var(--surface2);padding:.5rem 1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.day-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.5px;text-transform:uppercase;}
+.day-tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:#FAC775;color:#633806;}
+.day-tag.rest{background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
+.ex-list{padding:.5rem 1rem}
+.ex-item{display:flex;align-items:flex-start;gap:8px;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:13px;}
+.ex-item:last-child{border-bottom:none}
+.ex-num{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;color:var(--accent);min-width:16px;}
+.ex-name{font-weight:600;flex:1;line-height:1.3}
+.ex-detail{font-size:11px;color:var(--text2);margin-top:1px}
+.ex-yt{font-size:18px;color:#E24B4A;text-decoration:none;flex-shrink:0;opacity:.8;transition:opacity .15s}
+.ex-yt:hover{opacity:1}
+.rest-msg{padding:.5rem 1rem;font-size:13px;color:var(--text2)}
+.nutrition-card{background:var(--green-bg);border:1px solid #C0DD97;border-radius:10px;padding:.85rem 1.1rem;margin-bottom:1rem;}
+.nutrition-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--green);margin-bottom:4px;}
+.nutrition-text{font-size:13px;color:#27500A;line-height:1.6}
+.result-actions{display:flex;gap:.6rem;margin-top:1.1rem;flex-wrap:wrap;}
+.result-actions .btn{flex:1;justify-content:center;font-size:13px;min-width:110px;}
+
+/* HISTORY */
+.history-section{margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem;}
+.history-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;margin-bottom:.6rem;display:flex;align-items:center;gap:6px;}
+.history-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.65rem 1rem;margin-bottom:.5rem;cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:10px;}
+.history-item:hover{background:#e8e6e2}
+.history-date{font-size:12px;color:var(--text2);min-width:90px;}
+.history-obj{font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.history-badge{font-size:11px;padding:2px 7px;border-radius:10px;background:var(--accent);color:#fff;flex-shrink:0;}
+.no-history{font-size:13px;color:var(--text3);padding:.5rem 0;}
+
+/* EMAIL MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.modal-overlay.visible{display:flex}
+.modal{background:#fff;border-radius:14px;padding:1.5rem;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,0.2);}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:21px;margin-bottom:.3rem;}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:1.1rem;line-height:1.5}
+.modal-actions{display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap;}
+.modal-actions .btn{flex:1;justify-content:center;min-width:100px;}
+.gmail-btn{background:#EA4335;border-color:#EA4335;color:#fff}.gmail-btn:hover{background:#c23321}
+.outlook-btn{background:#0078D4;border-color:#0078D4;color:#fff}.outlook-btn:hover{background:#005fa3}
+.copy-tip{font-size:12px;color:var(--text2);margin-top:.75rem;padding:.6rem .75rem;background:var(--surface2);border-radius:8px;line-height:1.5;display:none;}
+
+/* PRINT */
+@media print{
+  body{background:#fff;padding:0}
+  .app-shell{box-shadow:none;border-radius:0;max-width:100%}
+  .header,.step-bar,.result-actions,.nav-row,.history-section{display:none!important}
+  .result-screen{display:block!important;padding:.5rem}
+  .day-card{break-inside:avoid;page-break-inside:avoid}
+  .week-label{margin-top:1.5rem}
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">TRAIN<span>SMART</span></div>
+    <div class="header-user" id="headerUser">
+      <img class="user-avatar" id="userAvatar" src="" alt="Avatar">
+      <span class="user-name" id="userName"></span>
+      <button class="btn-logout" id="btnLogout" style="display:none" onclick="doLogout()" title="Tancar sessió"><i class="ti ti-logout"></i></button>
+      <button class="btn-google-login" id="btnLogin" onclick="doGoogleLogin()">
+        <i class="ti ti-brand-google"></i> Inicia sessió
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP BAR -->
+  <div class="step-bar" id="stepBar">
+    <div class="step-item active"><span class="sn">1</span> Gimnàs</div>
+    <div class="step-item"><span class="sn">2</span> Menú</div>
+    <div class="step-item"><span class="sn">3</span> Perfil</div>
+    <div class="step-item"><span class="sn">4</span> Pla</div>
+  </div>
+
+  <!-- WIZARD -->
+  <div class="content" id="wizardContent">
+
+    <!-- PAS 1: Gimnàs -->
+    <div class="step-panel visible" id="step0">
+      <div class="step-title">El teu espai d'entrenament</div>
+      <div class="step-sub">Puja fotos del material disponible o indica que entrenaràs a casa sense material</div>
+
+      <div class="upload-zone" id="gymUploadZone">
+        <input type="file" accept="image/*" multiple id="gymInput">
+        <div class="upload-icon"><i class="ti ti-camera"></i></div>
+        <div class="upload-text">Puja fotos del gimnàs o material</div>
+        <div class="upload-hint">JPG, PNG · Pots pujar-ne diverses</div>
+      </div>
+      <div class="img-grid" id="gymPreviews"></div>
+      <div class="ok-msg" id="gymOk"><i class="ti ti-circle-check"></i> <span id="gymCount">0</span> imatge(s) afegida(es)</div>
+
+      <button class="no-gym-btn" id="noGymBtn" onclick="toggleNoGym()">
+        <i class="ti ti-home"></i> No tinc accés a un gimnàs · Entreno a casa sense material
+      </button>
+      <div class="ok-msg" id="noGymOk" style="margin-top:-.4rem;margin-bottom:.5rem"><i class="ti ti-circle-check"></i> Perfecte! Adaptarem el pla per a casa sense material</div>
+
+      <div class="err" id="gymErr">Puja una foto del gimnàs o selecciona "No tinc accés a un gimnàs"</div>
+      <div class="nav-row"><div></div><button class="btn btn-primary" onclick="goNext(0)">Continuar <i class="ti ti-arrow-right"></i></button></div>
+    </div>
+
+    <!-- PAS 2: Menú -->
+    <div class="step-panel" id="step1">
+      <div class="step-title">El teu menú quinzenal</div>
+      <div class="step-sub">Puja una foto del menú que seguiràs les properes dues setmanes</div>
+      <div class="upload-zone">
+        <input type="file" accept="image/*" id="menuInput">
+        <div class="upload-icon"><i class="ti ti-salad"></i></div>
+        <div class="upload-text">Puja la foto del menú</div>
+        <div class="upload-hint">JPG, PNG · Una sola imatge</div>
+      </div>
+      <div class="img-grid" id="menuPreviews"></div>
+      <div class="ok-msg" id="menuOk"><i class="ti ti-circle-check"></i> Menú afegit correctament</div>
+      <div class="err" id="menuErr">Has de pujar el menú</div>
+      <div class="nav-row">
+        <button class="btn" onclick="setStep(0)"><i class="ti ti-arrow-left"></i> Enrere</button>
+        <button class="btn btn-primary" onclick="goNext(1)">Continuar <i class="ti ti-arrow-right"></i></button>
+      </div>
+    </div>
+
+    <!-- PAS 3: Perfil (sense camp correu) -->
+    <div class="step-panel" id="step2">
+      <div class="step-title">El teu perfil</div>
+      <div class="step-sub">Dades personals i objectius per als propers 15 dies</div>
+      <label class="flabel">Gènere</label>
+      <div class="gender-row">
+        <button class="gender-btn" id="gH" onclick="setGender('H')"><i class="ti ti-man"></i> Home</button>
+        <button class="gender-btn" id="gD" onclick="setGender('D')"><i class="ti ti-woman"></i> Dona</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0"><label class="flabel" for="pesoA">Pes actual (kg)</label><input type="number" id="pesoA" min="30" max="300" placeholder="ex: 75"></div>
+        <div class="form-group" style="margin-bottom:0"><label class="flabel" for="pesoO">Pes objectiu (kg)</label><input type="number" id="pesoO" min="30" max="300" placeholder="ex: 70"></div>
+      </div>
+      <div class="form-row" style="margin-top:.75rem">
+        <div class="form-group" style="margin-bottom:0"><label class="flabel" for="edatI">Edat</label><input type="number" id="edatI" min="14" max="100" placeholder="ex: 50"></div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="flabel" for="nivell">Nivell</label>
+          <select id="nivell">
+            <option value="">Selecciona...</option>
+            <option value="principiant">Principiant</option>
+            <option value="intermedi">Intermedi</option>
+            <option value="avançat">Avançat</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:.75rem">
+        <label class="flabel">Dies d'entrenament per setmana</label>
+        <div class="days-grid" style="margin-top:6px">
+          <button class="day-btn" data-d="1" onclick="toggleDay(this)">Dl</button>
+          <button class="day-btn" data-d="2" onclick="toggleDay(this)">Dm</button>
+          <button class="day-btn" data-d="3" onclick="toggleDay(this)">Dc</button>
+          <button class="day-btn" data-d="4" onclick="toggleDay(this)">Dj</button>
+          <button class="day-btn" data-d="5" onclick="toggleDay(this)">Dv</button>
+          <button class="day-btn" data-d="6" onclick="toggleDay(this)">Ds</button>
+          <button class="day-btn" data-d="7" onclick="toggleDay(this)">Dg</button>
+        </div>
+      </div>
+      <div class="err" id="profileErr">Omple tots els camps i selecciona almenys un dia</div>
+      <div class="nav-row">
+        <button class="btn" onclick="setStep(1)"><i class="ti ti-arrow-left"></i> Enrere</button>
+        <button class="btn btn-primary" onclick="startGenerate()"><i class="ti ti-bolt"></i> Generar pla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RUNNER -->
+  <div class="runner-screen" id="runnerScreen">
+    <div class="runner-title">Generant el teu pla...</div>
+    <div class="runner-sub">L'entrenadora IA està preparant el teu programa personalitzat</div>
+    <div class="track-wrap">
+      <div class="track">
+        <div class="track-fill" id="trackFill"></div>
+        <div class="runner-wrap" id="runnerWrap">
+          <svg class="runner-svg" viewBox="0 0 36 52" fill="none" xmlns="http://www.w3.org/2000/svg" id="runnerSvg">
+            <circle cx="18" cy="6" r="5" fill="#E24B4A"/>
+            <line x1="18" y1="11" x2="18" y2="25" stroke="#E24B4A" stroke-width="2.5" stroke-linecap="round"/>
+            <line class="arm-l" x1="18" y1="15" x2="10" y2="21" stroke="#E24B4A" stroke-width="2" stroke-linecap="round"/>
+            <line class="arm-r" x1="18" y1="15" x2="26" y2="21" stroke="#E24B4A" stroke-width="2" stroke-linecap="round"/>
+            <line class="leg-l" x1="18" y1="25" x2="12" y2="35" stroke="#E24B4A" stroke-width="2.5" stroke-linecap="round"/>
+            <line class="leg-l2" x1="12" y1="35" x2="8" y2="44" stroke="#E24B4A" stroke-width="2" stroke-linecap="round"/>
+            <line class="leg-r" x1="18" y1="25" x2="24" y2="33" stroke="#E24B4A" stroke-width="2.5" stroke-linecap="round"/>
+            <line class="leg-r2" x1="24" y1="33" x2="28" y2="44" stroke="#E24B4A" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+      <div class="finish-flag">🏁</div>
+    </div>
+    <div class="steps-list">
+      <div class="progress-step" id="ps0"><div class="pstep-icon"><i class="ti ti-user"></i></div><span>Analitzant el teu perfil</span><div class="pstep-dot"></div></div>
+      <div class="progress-step" id="ps1"><div class="pstep-icon"><i class="ti ti-heart-rate-monitor"></i></div><span>Ajustant intensitat per al teu nivell</span><div class="pstep-dot"></div></div>
+      <div class="progress-step" id="ps2"><div class="pstep-icon"><i class="ti ti-salad"></i></div><span>Integrant el menú nutricional</span><div class="pstep-dot"></div></div>
+      <div class="progress-step" id="ps3"><div class="pstep-icon"><i class="ti ti-calendar"></i></div><span>Distribuint els dies d'entrenament</span><div class="pstep-dot"></div></div>
+      <div class="progress-step" id="ps4"><div class="pstep-icon"><i class="ti ti-list-check"></i></div><span>Seleccionant exercicis i sèries</span><div class="pstep-dot"></div></div>
+      <div class="progress-step" id="ps5"><div class="pstep-icon"><i class="ti ti-brand-youtube"></i></div><span>Afegint vídeos de referència</span><div class="pstep-dot"></div></div>
+    </div>
+    <div class="celebration" id="celebration">
+      <div class="celebration-emoji">🏆</div>
+      <div class="celebration-text">Pla completat!</div>
+      <div class="celebration-sub">El teu entrenament quinzenal està llest</div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-screen" id="resultScreen">
+    <div id="planContent"></div>
+    <div class="result-actions">
+      <button class="btn btn-primary" onclick="doPrint()"><i class="ti ti-file-type-pdf"></i> Descarregar PDF</button>
+      <button class="btn btn-green" onclick="showEmailModal()"><i class="ti ti-mail"></i> Enviar correu</button>
+    </div>
+    <div style="margin-top:.65rem">
+      <button class="btn" style="width:100%;justify-content:center" onclick="resetApp()"><i class="ti ti-refresh"></i> Nou pla</button>
+    </div>
+
+    <!-- HISTORIAL (només si hi ha sessió) -->
+    <div class="history-section" id="historySection" style="display:none">
+      <div class="history-title"><i class="ti ti-history"></i> El teu historial de plans</div>
+      <div id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL MODAL -->
+<div class="modal-overlay" id="emailModal">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-mail"></i> Enviar el pla per correu</div>
+    <div class="modal-sub">Introdueix la teva adreça i tria el client de correu. El pla es copiarà automàticament al porta-retalls.</div>
+    <div class="form-group" style="margin-bottom:.5rem">
+      <label class="flabel" for="emailDest">La teva adreça de correu</label>
+      <input type="email" id="emailDest" placeholder="exemple@gmail.com">
+    </div>
+    <div class="modal-actions">
+      <button class="btn gmail-btn" onclick="openGmail()"><i class="ti ti-brand-google"></i> Gmail</button>
+      <button class="btn outlook-btn" onclick="openOutlook()"><i class="ti ti-brand-windows"></i> Outlook</button>
+    </div>
+    <div class="copy-tip" id="copyTip">
+      ✅ Pla copiat al porta-retalls. Enganxa'l (<strong>Ctrl+V</strong> o <strong>⌘V</strong>) al cos del correu quan s'obri.
+    </div>
+    <div class="modal-actions" style="margin-top:.5rem">
+      <button class="btn" style="width:100%;justify-content:center;font-size:13px" onclick="closeEmailModal()"><i class="ti ti-x"></i> Cancel·lar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==========================================
+// STATE
+// ==========================================
+const state={
+  gymImages:[],gymBase64:[],noGym:false,
+  menuImage:null,menuBase64:null,
+  gender:null,selectedDays:[],
+  planData:null,userParams:null,
+  user:null // {name, email, picture, id}
+};
+const dayNames=['','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte','Diumenge'];
+let runnerInterval=null,legPhase=0,stepTimers=[];
+const TOTAL_STEPS=6;
+
+// ==========================================
+// GOOGLE LOGIN (simulat amb prompt per email)
+// Nota: Per OAuth real cal un Client ID de Google Cloud Console
+// ==========================================
+function doGoogleLogin(){
+  // Simulem amb un diàleg senzill que demana el nom i correu
+  // En producció, substituir per Google Identity Services (GSI)
+  const email=prompt('Introdueix el teu correu de Google:','');
+  if(!email||!email.includes('@'))return;
+  const name=email.split('@')[0];
+  state.user={
+    name:name.charAt(0).toUpperCase()+name.slice(1),
+    email:email,
+    id:'user_'+btoa(email).replace(/=/g,''),
+    picture:null
+  };
+  saveUserSession();
+  updateLoginUI();
+  showHistoryIfLogged();
+}
+
+function doLogout(){
+  state.user=null;
+  localStorage.removeItem('ts_session');
+  updateLoginUI();
+  document.getElementById('historySection').style.display='none';
+}
+
+function saveUserSession(){
+  if(state.user)localStorage.setItem('ts_session',JSON.stringify(state.user));
+}
+
+function loadUserSession(){
+  try{
+    const s=localStorage.getItem('ts_session');
+    if(s){state.user=JSON.parse(s);updateLoginUI();}
+  }catch(e){}
+}
+
+function updateLoginUI(){
+  const u=state.user;
+  document.getElementById('btnLogin').style.display=u?'none':'flex';
+  document.getElementById('btnLogout').style.display=u?'inline-flex':'none';
+  document.getElementById('userName').style.display=u?'inline':'none';
+  document.getElementById('userAvatar').style.display=u&&u.picture?'inline-block':'none';
+  if(u){
+    document.getElementById('userName').textContent=u.name;
+    if(u.picture)document.getElementById('userAvatar').src=u.picture;
+    if(u.email)document.getElementById('emailDest').value=u.email;
+  }
+}
+
+function showHistoryIfLogged(){
+  if(!state.user)return;
+  document.getElementById('historySection').style.display='block';
+  renderHistory();
+}
+
+// ==========================================
+// HISTORY (localStorage per usuari)
+// ==========================================
+function getHistoryKey(){return state.user?'ts_history_'+state.user.id:null;}
+
+function saveToHistory(plan,params){
+  const k=getHistoryKey();if(!k)return;
+  let hist=[];
+  try{hist=JSON.parse(localStorage.getItem(k)||'[]');}catch(e){}
+  hist.unshift({
+    id:Date.now(),
+    date:new Date().toLocaleDateString('ca-ES',{day:'2-digit',month:'short',year:'numeric'}),
+    objectiu:plan.objectiu||'Pla d\'entrenament',
+    nivell:params.nivell||'',
+    plan:plan
+  });
+  if(hist.length>10)hist=hist.slice(0,10); // màxim 10
+  localStorage.setItem(k,JSON.stringify(hist));
+}
+
+function getHistory(){
+  const k=getHistoryKey();if(!k)return[];
+  try{return JSON.parse(localStorage.getItem(k)||'[]');}catch(e){return[];}
+}
+
+function renderHistory(){
+  const hist=getHistory();
+  const el=document.getElementById('historyList');
+  if(!hist.length){el.innerHTML='<div class="no-history">Encara no tens cap pla guardat. Genera el primer!</div>';return;}
+  el.innerHTML=hist.map((h,i)=>`
+    <div class="history-item" onclick="loadHistoryPlan(${i})">
+      <div class="history-date"><i class="ti ti-calendar"></i> ${h.date}</div>
+      <div class="history-obj">${h.objectiu}</div>
+      <span class="history-badge">${h.nivell||'pla'}</span>
+    </div>`).join('');
+}
+
+function loadHistoryPlan(idx){
+  const hist=getHistory();
+  if(!hist[idx])return;
+  state.planData=hist[idx].plan;
+  renderPlan(state.planData);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ==========================================
+// RUNNER ANIMATION
+// ==========================================
+function animateRunner(){
+  legPhase=(legPhase+1)%4;
+  const svg=document.getElementById('runnerSvg');if(!svg)return;
+  const frames=[
+    {ll:[11,36],ll2:[7,44],lr:[25,33],lr2:[29,42],al:[9,20],ar:[26,22]},
+    {ll:[14,37],ll2:[11,45],lr:[22,32],lr2:[26,40],al:[10,22],ar:[25,20]},
+    {ll:[13,35],ll2:[9,43],lr:[23,34],lr2:[27,43],al:[9,21],ar:[26,21]},
+    {ll:[12,36],ll2:[8,44],lr:[24,33],lr2:[28,42],al:[11,22],ar:[24,20]},
+  ];
+  const f=frames[legPhase];
+  const set=(sel,x1,y1,x2,y2)=>{const el=svg.querySelector(sel);if(!el)return;if(x1!==null){el.setAttribute('x1',x1);el.setAttribute('y1',y1);}el.setAttribute('x2',x2);el.setAttribute('y2',y2);};
+  set('.leg-l',null,null,f.ll[0],f.ll[1]);set('.leg-l2',f.ll[0],f.ll[1],f.ll2[0],f.ll2[1]);
+  set('.leg-r',null,null,f.lr[0],f.lr[1]);set('.leg-r2',f.lr[0],f.lr[1],f.lr2[0],f.lr2[1]);
+  set('.arm-l',null,null,f.al[0],f.al[1]);set('.arm-r',null,null,f.ar[0],f.ar[1]);
+}
+function setProgress(pct){
+  document.getElementById('trackFill').style.width=pct+'%';
+  document.getElementById('runnerWrap').style.left=Math.min(pct,97)+'%';
+}
+function advanceProgressStep(idx){
+  if(idx>0){const prev=document.getElementById('ps'+(idx-1));if(prev){prev.classList.remove('active');prev.classList.add('done');prev.querySelector('.pstep-icon').innerHTML='<i class="ti ti-check"></i>';}}
+  const ps=document.getElementById('ps'+idx);if(ps)ps.classList.add('active');
+  setProgress(Math.round((idx/TOTAL_STEPS)*90));
+}
+function startProgressAnimation(ms){
+  const d=ms/(TOTAL_STEPS+1);
+  for(let i=0;i<TOTAL_STEPS;i++)stepTimers.push(setTimeout(()=>advanceProgressStep(i),i*d));
+}
+function finishProgress(){
+  stepTimers.forEach(t=>clearTimeout(t));
+  for(let i=0;i<TOTAL_STEPS;i++){const ps=document.getElementById('ps'+i);if(ps){ps.classList.remove('active');ps.classList.add('done');ps.querySelector('.pstep-icon').innerHTML='<i class="ti ti-check"></i>';}}
+  setProgress(100);clearInterval(runnerInterval);
+  setTimeout(()=>{document.getElementById('celebration').style.display='block';},400);
+  setTimeout(()=>showResult(),2000);
+}
+
+// ==========================================
+// NAVIGATION
+// ==========================================
+function setStep(n){
+  document.querySelectorAll('.step-panel').forEach((p,i)=>p.classList.toggle('visible',i===n));
+  document.querySelectorAll('.step-item').forEach((s,i)=>{s.classList.remove('active','done');if(i<n)s.classList.add('done');if(i===n)s.classList.add('active');});
+}
+function goNext(step){
+  if(step===0){
+    if(!state.gymImages.length&&!state.noGym){show('gymErr');return;}
+    hide('gymErr');setStep(1);
+  } else if(step===1){
+    if(!state.menuImage){show('menuErr');return;}
+    hide('menuErr');setStep(2);
+  }
+}
+function show(id){document.getElementById(id).style.display='block'}
+function hide(id){document.getElementById(id).style.display='none'}
+
+function setGender(g){state.gender=g;document.getElementById('gH').classList.toggle('selected',g==='H');document.getElementById('gD').classList.toggle('selected',g==='D');}
+function toggleDay(btn){const d=btn.dataset.d;btn.classList.toggle('selected');if(btn.classList.contains('selected')){if(!state.selectedDays.includes(d))state.selectedDays.push(d);}else{state.selectedDays=state.selectedDays.filter(x=>x!==d);}}
+
+function toggleNoGym(){
+  state.noGym=!state.noGym;
+  document.getElementById('noGymBtn').classList.toggle('selected',state.noGym);
+  document.getElementById('noGymOk').style.display=state.noGym?'block':'none';
+  document.getElementById('gymUploadZone').style.opacity=state.noGym?'0.4':'1';
+  document.getElementById('gymUploadZone').style.pointerEvents=state.noGym?'none':'auto';
+  if(state.noGym)hide('gymErr');
+}
+
+function fileToBase64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});}
+function addPreviews(container,files,arr,b64arr,okId,countId){
+  Array.from(files).forEach(file=>{
+    const url=URL.createObjectURL(file);arr.push(file);fileToBase64(file).then(b64=>b64arr.push(b64));
+    const wrap=document.createElement('div');wrap.className='img-wrap';
+    const img=document.createElement('img');img.className='img-thumb';img.src=url;
+    const del=document.createElement('button');del.className='img-del';del.innerHTML='×';
+    del.onclick=()=>{const i=arr.indexOf(file);if(i>-1){arr.splice(i,1);b64arr.splice(i,1);}wrap.remove();if(countId)document.getElementById(countId).textContent=arr.length;};
+    wrap.appendChild(img);wrap.appendChild(del);container.appendChild(wrap);
+  });
+  show(okId);if(countId)document.getElementById(countId).textContent=arr.length;
+}
+document.getElementById('gymInput').addEventListener('change',function(){
+  addPreviews(document.getElementById('gymPreviews'),this.files,state.gymImages,state.gymBase64,'gymOk','gymCount');
+  hide('gymErr');
+  if(state.noGym){state.noGym=false;document.getElementById('noGymBtn').classList.remove('selected');document.getElementById('noGymOk').style.display='none';document.getElementById('gymUploadZone').style.opacity='1';document.getElementById('gymUploadZone').style.pointerEvents='auto';}
+});
+document.getElementById('menuInput').addEventListener('change',function(){
+  const file=this.files[0];if(!file)return;state.menuImage=file;fileToBase64(file).then(b64=>{state.menuBase64=b64;});
+  const c=document.getElementById('menuPreviews');c.innerHTML='';
+  const wrap=document.createElement('div');wrap.className='img-wrap';
+  const img=document.createElement('img');img.className='img-thumb';img.src=URL.createObjectURL(file);
+  wrap.appendChild(img);c.appendChild(wrap);show('menuOk');hide('menuErr');
+});
+
+// ==========================================
+// GENERATE
+// ==========================================
+function startGenerate(){
+  const peso=document.getElementById('pesoA').value,pesoO=document.getElementById('pesoO').value;
+  const edat=document.getElementById('edatI').value,nivell=document.getElementById('nivell').value;
+  if(!state.gender||!peso||!pesoO||!edat||!nivell||!state.selectedDays.length){show('profileErr');return;}
+  hide('profileErr');
+  state.userParams={peso,pesoO,edat,nivell,gender:state.gender,days:[...state.selectedDays],noGym:state.noGym};
+  document.getElementById('wizardContent').style.display='none';
+  document.getElementById('stepBar').style.display='none';
+  document.getElementById('runnerScreen').classList.add('visible');
+  runnerInterval=setInterval(animateRunner,110);
+  setProgress(0);startProgressAnimation(22000);
+  generatePlan(state.userParams);
+}
+
+async function generatePlan(p){
+  const daysLabel=[...p.days].sort((a,b)=>a-b).map(d=>dayNames[parseInt(d)]).join(', ');
+  const genreLabel=p.gender==='H'?'home':'dona';
+  const diff=(parseFloat(p.peso)-parseFloat(p.pesoO)).toFixed(1);
+  const objectiuTxt=parseFloat(diff)>0?`perdre ${diff} kg`:'millorar la forma física';
+  const edatN=parseInt(p.edat);
+  const isGran=edatN>=50;
+  const isPrinc=p.nivell==='principiant';
+
+  const prompt=`Ets una entrenadora personal especialitzada en exercici suau, cardio de baixa intensitat i tonificació (estil canal "Siéntete Joven": rutines a casa, sense impacte, accessibles per a tothom).
+
+Genera un pla d'entrenament quinzenal en CATALÀ per a:
+- Gènere: ${genreLabel}, Edat: ${p.edat} anys
+- Pes actual: ${p.peso} kg, pes objectiu: ${p.pesoO} kg (${objectiuTxt})
+- Nivell: ${p.nivell}
+- Dies d'entrenament: ${daysLabel}
+- Espai: ${p.noGym?'A CASA SENSE MATERIAL (sense peses, sense màquines, sense bandes)':'Casa o gimnàs amb material bàsic'}
+
+CRITERIS CLAU:
+${isPrinc?'- Principiant: exercicis molt senzills, SENSE salts, SENSE impacte, moviments lents i controlats.':''}
+${isGran?'- Persona de '+p.edat+' anys: baixa intensitat, prioritzar mobilitat articular, equilibri i tonificació suau.':''}
+${p.noGym?'- NOMÉS exercicis sense material: marxa, moviments articulars, pes corporal, estiraments.':''}
+- Sessions de 30-40 minuts màxim
+- Cada sessió: escalfament (2-3 min) + exercicis principals + tornada a la calma (2 min)
+- Varia els grups musculars entre sessions per evitar repeticions i avorriment
+- Vídeos de YouTube preferiblement en castellà o català, estil suau i didàctic
+
+Respon ÚNICAMENT amb JSON vàlid, sense text fora, sense markdown, sense backticks.
+{"objectiu":"","consell_nutricional":"","setmana1":[{"dia":"Dilluns","tipus":"","descans":false,"exercicis":[{"nom":"","series":1,"repeticions":"","descans_seg":"","youtube_cerca":""}]}],"setmana2":[]}
+
+Regles: 7 dies cada setmana (descans:true si no toca entrenar), 5-6 exercicis per dia d'entrenament, les setmanes 1 i 2 han de tenir exercicis DIFERENTS per evitar la monotonia.`;
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4500,messages:[{role:'user',content:prompt}]})});
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    const data=await resp.json();
+    let raw=data.content.filter(b=>b.type==='text').map(b=>b.text).join('').trim();
+    raw=raw.replace(/```[\w]*\n?/g,'').replace(/```/g,'');
+    const s=raw.indexOf('{'),e=raw.lastIndexOf('}');
+    if(s===-1||e===-1)throw new Error('No JSON');
+    state.planData=JSON.parse(raw.substring(s,e+1));
+    if(state.user)saveToHistory(state.planData,state.userParams);
+    finishProgress();
+  }catch(err){
+    console.error(err);
+    state.planData=generateFallbackPlan(p);
+    if(state.user)saveToHistory(state.planData,state.userParams);
+    finishProgress();
+  }
+}
+
+function generateFallbackPlan(p){
+  const daysSort=[...p.days].sort((a,b)=>a-b);
+  const isPrinc=p.nivell==='principiant';
+  const noGym=p.noGym;
+
+  const s1=[
+    {tipus:'Cardio suau + Escalfament',ex:[
+      {nom:'Marxa al lloc amb braços',series:1,repeticions:'3 min',descans_seg:'10s',youtube_cerca:'marcha en el sitio siéntete joven'},
+      {nom:'Elevació de genolls alternats',series:2,repeticions:'20 reps',descans_seg:'30s',youtube_cerca:'elevacion rodillas cardio suave casa'},
+      {nom:'Pas lateral amb moviment de braços',series:2,repeticions:'30s',descans_seg:'30s',youtube_cerca:'paso lateral ejercicio bajo impacto'},
+      {nom:'Tonificació de gluti (peu enrere)',series:2,repeticions:'15 reps cada cama',descans_seg:'30s',youtube_cerca:'ejercicio gluteos en casa sin impacto'},
+      {nom:'Rotació de cintura dempeus',series:2,repeticions:'10 reps',descans_seg:'20s',youtube_cerca:'rotacion cintura ejercicio suave'},
+      {nom:'Estirament de bessons i isquiotibials',series:1,repeticions:'45s',descans_seg:'0s',youtube_cerca:'estiramiento piernas suave'},
+    ]},
+    {tipus:'Tonificació cames i core',ex:[
+      {nom:'Escalfament: girs articulars',series:1,repeticions:'2 min',descans_seg:'10s',youtube_cerca:'movilidad articular calentamiento suave'},
+      {nom:'Sentadilla assistida (amb cadira)',series:3,repeticions:'12 reps',descans_seg:'45s',youtube_cerca:'sentadilla con silla principiantes'},
+      {nom:'Pont de gluti al terra',series:3,repeticions:'15 reps',descans_seg:'30s',youtube_cerca:'puente de glúteo suelo ejercicio'},
+      {nom:'Planxa recolzada als colzes',series:2,repeticions:'25s',descans_seg:'30s',youtube_cerca:'plancha codos principiantes'},
+      {nom:'Abdominals suaus (crunch parcial)',series:2,repeticions:'15 reps',descans_seg:'30s',youtube_cerca:'abdominal crunch suave mayores'},
+      {nom:'Estirament de quadríceps dempeus',series:1,repeticions:'40s cada cama',descans_seg:'0s',youtube_cerca:'estiramiento cuadriceps dempeus'},
+    ]},
+    {tipus:'Mobilitat i equilibri',ex:[
+      {nom:'Rotació de cap i espatlles',series:1,repeticions:'1 min',descans_seg:'10s',youtube_cerca:'movilidad cuello hombros ejercicio'},
+      {nom:'Marxa amb elevació de braços amunt',series:2,repeticions:'1 min',descans_seg:'30s',youtube_cerca:'marcha brazos ejercicio cardio suave'},
+      {nom:'Equilibri en un peu (amb suport)',series:2,repeticions:'30s cada peu',descans_seg:'20s',youtube_cerca:'equilibrio un pie ejercicio mayores'},
+      {nom:'Estocada estàtica (pas endavant llarg)',series:2,repeticions:'10 reps',descans_seg:'30s',youtube_cerca:'zancada estatica sin salto'},
+      {nom:'Obertura de pit amb braços',series:2,repeticions:'12 reps',descans_seg:'20s',youtube_cerca:'apertura pecho brazos ejercicio suave'},
+      {nom:'Relaxació i respiració abdominal',series:1,repeticions:'2 min',descans_seg:'0s',youtube_cerca:'respiracion abdominal relajacion'},
+    ]},
+  ];
+  const s2=[
+    {tipus:'Cardio progressiu',ex:[
+      {nom:'Marxa enèrgica al lloc',series:1,repeticions:'3 min',descans_seg:'10s',youtube_cerca:'marcha energica cardio sin impacto'},
+      {nom:'Talonades (talons al gluti)',series:2,repeticions:'30s',descans_seg:'30s',youtube_cerca:'talones gluteo cardio suave'},
+      {nom:'Pas creuats laterals',series:2,repeticions:'30s',descans_seg:'20s',youtube_cerca:'paso cruzado lateral ejercicio'},
+      {nom:'Flexió de braços a la paret',series:3,repeticions:'12 reps',descans_seg:'30s',youtube_cerca:'flexiones pared principiantes facil'},
+      {nom:'Abducció de maluc (de costat al terra)',series:2,repeticions:'15 reps',descans_seg:'30s',youtube_cerca:'abduccion cadera suelo ejercicio'},
+      {nom:'Estirament d\'espatlles i esquena',series:1,repeticions:'45s',descans_seg:'0s',youtube_cerca:'estiramiento hombros espalda suave'},
+    ]},
+    {tipus:'Força suau i coordinació',ex:[
+      {nom:'Escalfament articular complet',series:1,repeticions:'2 min',descans_seg:'10s',youtube_cerca:'calentamiento articular completo'},
+      {nom:'Sentadilla lateral (pas a banda)',series:3,repeticions:'12 reps',descans_seg:'40s',youtube_cerca:'sentadilla lateral sin salto'},
+      {nom:'Superman al terra (extensió dorsal)',series:3,repeticions:'12 reps',descans_seg:'30s',youtube_cerca:'superman ejercicio espalda suelo'},
+      {nom:'Rotació de tronc assegut',series:2,repeticions:'10 reps',descans_seg:'20s',youtube_cerca:'rotacion tronco sentado movilidad'},
+      {nom:'Elevació de panxells dempeus',series:3,repeticions:'20 reps',descans_seg:'20s',youtube_cerca:'elevacion gemelos puntillas'},
+      {nom:'Estirament de turmells i mollets',series:1,repeticions:'40s',descans_seg:'0s',youtube_cerca:'estiramiento gemelos tobillo suave'},
+    ]},
+    {tipus:'Full body suau',ex:[
+      {nom:'Marxa al lloc amb escalfament',series:1,repeticions:'2 min',descans_seg:'10s',youtube_cerca:'calentamiento marcha suave'},
+      {nom:'Squat amb elevació de braços',series:3,repeticions:'12 reps',descans_seg:'40s',youtube_cerca:'squat brazos arriba coordinacion'},
+      {nom:'Fila en quadrupèdia (costat)',series:2,repeticions:'12 cada braç',descans_seg:'30s',youtube_cerca:'remo cuadrupedia sin pesas'},
+      {nom:'Abdominals de costat (bicicleta lenta)',series:2,repeticions:'12 reps',descans_seg:'30s',youtube_cerca:'bicicleta abdominal lento suave'},
+      {nom:'Flexió de braços als genolls',series:3,repeticions:'12 reps',descans_seg:'30s',youtube_cerca:'flexion rodillas facil principiantes'},
+      {nom:'Relaxació i estirament general',series:1,repeticions:'2 min',descans_seg:'0s',youtube_cerca:'estiramiento general cuerpo completo'},
+    ]},
+  ];
+
+  function buildWeek(wDays,sessions){
+    return [1,2,3,4,5,6,7].map(d=>{
+      const dStr=String(d);
+      if(!wDays.includes(dStr))return{dia:dayNames[d],tipus:'Descans',descans:true,exercicis:[]};
+      const idx=wDays.indexOf(dStr)%sessions.length;
+      return{dia:dayNames[d],tipus:sessions[idx].tipus,descans:false,exercicis:sessions[idx].ex};
+    });
+  }
+  return{
+    objectiu:parseFloat(p.peso)>parseFloat(p.pesoO)?'Perdre pes de forma progressiva i sostenible':'Millorar la forma física i el benestar general',
+    consell_nutricional:'Segueix una dieta mediterrània: verdures, fruites, llegums, peix blau i oli d\'oliva verge extra. Redueix els ultra-processats i el sucre. Hidrata\'t amb almenys 6-8 gots d\'aigua al dia.',
+    setmana1:buildWeek(daysSort,s1),
+    setmana2:buildWeek(daysSort,s2)
+  };
+}
+
+// ==========================================
+// SHOW RESULT
+// ==========================================
+function showResult(){
+  document.getElementById('runnerScreen').classList.remove('visible');
+  const rs=document.getElementById('resultScreen');rs.classList.add('visible');
+  document.getElementById('stepBar').style.display='flex';
+  document.querySelectorAll('.step-item').forEach((s,i)=>{s.classList.remove('active','done');if(i<3)s.classList.add('done');if(i===3)s.classList.add('active');});
+  renderPlan(state.planData);
+  if(state.user){
+    showHistoryIfLogged();
+    document.getElementById('emailDest').value=state.user.email||'';
+  }
+}
+
+function ytUrl(cerca){return 'https://www.youtube.com/results?search_query='+encodeURIComponent(cerca);}
+
+function renderWeek(days,label){
+  let h=`<div class="week-label">${label}</div>`;
+  days.forEach(day=>{
+    const rest=day.descans;
+    h+=`<div class="day-card"><div class="day-header"><span class="day-name">${day.dia||''}</span><span class="day-tag ${rest?'rest':''}">${rest?'Descans':(day.tipus||'Entrenament')}</span></div>`;
+    if(!rest&&day.exercicis&&day.exercicis.length){
+      h+='<div class="ex-list">';
+      day.exercicis.forEach((ex,i)=>{h+=`<div class="ex-item"><span class="ex-num">${i+1}</span><div style="flex:1"><div class="ex-name">${ex.nom||''}</div><div class="ex-detail">${ex.series||''} sèries · ${ex.repeticions||''} · Descans ${ex.descans_seg||''}</div></div><a class="ex-yt" href="${ytUrl(ex.youtube_cerca||ex.nom)}" target="_blank"><i class="ti ti-brand-youtube"></i></a></div>`;});
+      h+='</div>';
+    }else{h+='<div class="rest-msg"><i class="ti ti-moon"></i> Descans actiu: passeja, estira o practica respiració.</div>';}
+    h+='</div>';
+  });
+  return h;
+}
+function renderPlan(plan){
+  if(!plan)return;
+  let h=`<div class="plan-header"><div class="plan-header-title"><i class="ti ti-trophy"></i> ${plan.objectiu||'Pla personalitzat'}</div><div class="plan-header-sub">Programa quinzenal · Estil suau i efectiu</div></div>`;
+  if(plan.consell_nutricional)h+=`<div class="nutrition-card"><div class="nutrition-label"><i class="ti ti-salad"></i> Consell nutricional</div><div class="nutrition-text">${plan.consell_nutricional}</div></div>`;
+  if(plan.setmana1)h+=renderWeek(plan.setmana1,'Setmana 1');
+  if(plan.setmana2)h+=renderWeek(plan.setmana2,'Setmana 2');
+  document.getElementById('planContent').innerHTML=h;
+}
+
+// ==========================================
+// PDF
+// ==========================================
+function doPrint(){window.print();}
+
+// ==========================================
+// EMAIL
+// ==========================================
+function showEmailModal(){document.getElementById('emailModal').classList.add('visible');document.getElementById('copyTip').style.display='none';}
+function closeEmailModal(){document.getElementById('emailModal').classList.remove('visible');}
+
+function buildEmailText(){
+  const p=state.planData;if(!p)return'';
+  let t=`PLA D'ENTRENAMENT QUINZENAL — TrainSmart\n\nObjectiu: ${p.objectiu||''}\n\nConsell nutricional:\n${p.consell_nutricional||''}\n\n`;
+  ['setmana1','setmana2'].forEach((wk,wi)=>{
+    t+=`========== SETMANA ${wi+1} ==========\n`;
+    (p[wk]||[]).forEach(day=>{
+      t+=`\n${day.dia.toUpperCase()}: ${day.descans?'DESCANS':day.tipus}\n`;
+      if(!day.descans&&day.exercicis){day.exercicis.forEach((ex,i)=>{t+=`  ${i+1}. ${ex.nom}\n     ${ex.series} sèries × ${ex.repeticions} — Descans: ${ex.descans_seg}\n     Vídeo: https://www.youtube.com/results?search_query=${encodeURIComponent(ex.youtube_cerca||ex.nom)}\n`;});}
+    });
+    t+='\n';
+  });
+  t+='\n— Generat amb TrainSmart';
+  return t;
+}
+
+async function copyToClipboard(text){
+  try{await navigator.clipboard.writeText(text);return true;}
+  catch(e){
+    const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);return true;
+  }
+}
+
+async function openGmail(){
+  const dest=document.getElementById('emailDest').value||'';
+  const subj=encodeURIComponent("El meu pla d'entrenament quinzenal — TrainSmart");
+  const text=buildEmailText();
+  await copyToClipboard(text);
+  document.getElementById('copyTip').style.display='block';
+  setTimeout(()=>{window.open(`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(dest)}&su=${subj}`,'_blank');},600);
+}
+
+async function openOutlook(){
+  const dest=document.getElementById('emailDest').value||'';
+  const subj=encodeURIComponent("El meu pla d'entrenament quinzenal — TrainSmart");
+  const text=buildEmailText();
+  await copyToClipboard(text);
+  document.getElementById('copyTip').style.display='block';
+  setTimeout(()=>{window.open(`https://outlook.live.com/mail/0/deeplink/compose?to=${encodeURIComponent(dest)}&subject=${subj}`,'_blank');},600);
+}
+
+// ==========================================
+// RESET
+// ==========================================
+function resetApp(){
+  state.gymImages=[];state.gymBase64=[];state.noGym=false;state.menuImage=null;state.menuBase64=null;
+  state.gender=null;state.selectedDays=[];state.planData=null;state.userParams=null;
+  stepTimers.forEach(t=>clearTimeout(t));clearInterval(runnerInterval);legPhase=0;
+  document.getElementById('gymPreviews').innerHTML='';document.getElementById('menuPreviews').innerHTML='';
+  document.getElementById('gymInput').value='';document.getElementById('menuInput').value='';
+  ['pesoA','pesoO','edatI'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('nivell').value='';
+  document.querySelectorAll('.day-btn,.gender-btn').forEach(b=>b.classList.remove('selected'));
+  ['gymOk','menuOk','gymErr','menuErr','profileErr','noGymOk'].forEach(id=>hide(id));
+  document.getElementById('noGymBtn').classList.remove('selected');
+  document.getElementById('gymUploadZone').style.opacity='1';
+  document.getElementById('gymUploadZone').style.pointerEvents='auto';
+  document.getElementById('planContent').innerHTML='';
+  const icons=['<i class="ti ti-user"></i>','<i class="ti ti-heart-rate-monitor"></i>','<i class="ti ti-salad"></i>','<i class="ti ti-calendar"></i>','<i class="ti ti-list-check"></i>','<i class="ti ti-brand-youtube"></i>'];
+  for(let i=0;i<TOTAL_STEPS;i++){const ps=document.getElementById('ps'+i);if(ps){ps.classList.remove('active','done');ps.querySelector('.pstep-icon').innerHTML=icons[i];}}
+  document.getElementById('celebration').style.display='none';
+  setProgress(0);
+  document.getElementById('runnerScreen').classList.remove('visible');
+  document.getElementById('resultScreen').classList.remove('visible');
+  document.getElementById('historySection').style.display='none';
+  document.getElementById('wizardContent').style.display='block';
+  document.getElementById('stepBar').style.display='flex';
+  setStep(0);
+}
+
+// ==========================================
+// INIT
+// ==========================================
+loadUserSession();
+</script>
+</body>
+</html>
